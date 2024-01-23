@@ -1,0 +1,14 @@
+.\objects\adc.o: ADC.cpp
+.\objects\adc.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\adc.o: C:\Keil_v5\ARM\PACK\Keil\STM32F7xx_DFP\2.11.0\Drivers\CMSIS\Device\ST\STM32F7xx\Include\stm32f7xx.h
+.\objects\adc.o: C:\Keil_v5\ARM\PACK\Keil\STM32F7xx_DFP\2.11.0\Drivers\CMSIS\Device\ST\STM32F7xx\Include\stm32f746xx.h
+.\objects\adc.o: C:\Keil_v5\ARM\PACK\ARM\CMSIS\5.5.1\CMSIS\Core\Include\core_cm7.h
+.\objects\adc.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\adc.o: C:\Keil_v5\ARM\PACK\ARM\CMSIS\5.5.1\CMSIS\Core\Include\cmsis_version.h
+.\objects\adc.o: C:\Keil_v5\ARM\PACK\ARM\CMSIS\5.5.1\CMSIS\Core\Include\cmsis_compiler.h
+.\objects\adc.o: C:\Keil_v5\ARM\PACK\ARM\CMSIS\5.5.1\CMSIS\Core\Include\cmsis_armcc.h
+.\objects\adc.o: C:\Keil_v5\ARM\PACK\ARM\CMSIS\5.5.1\CMSIS\Core\Include\mpu_armv7.h
+.\objects\adc.o: C:\Keil_v5\ARM\PACK\Keil\STM32F7xx_DFP\2.11.0\Drivers\CMSIS\Device\ST\STM32F7xx\Include\system_stm32f7xx.h
+.\objects\adc.o: LCD.h
+.\objects\adc.o: Pin.h
+.\objects\adc.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
