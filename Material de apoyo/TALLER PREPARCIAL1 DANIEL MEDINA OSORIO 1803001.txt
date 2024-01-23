@@ -1,0 +1,114 @@
+/* Conexiones 
+	Puerto A:								
+		Pin 0: Tx							
+		Pin 1: Rx							 
+		Pin 4: DAC 1 
+
+*/
+
+// ****************************** LIBRERIAS **********************
+		#include <stdio.h>
+		#include "STM32f7xx.h"
+		#include "math.h"
+// *****************************ADC*********************************
+int A1,tmuestreo=0,jaux,habilitador=0;
+float voltaje,s1;
+int vector[10]={0,0,0,0,0,0,0,0,0,0};
+float muestra_actual=0,sumac,media;
+// ****************************** VARIABLES GLOBALES *************
+		int t=0;
+		float funcion=0;
+		int f=2000;
+		short amplitud=2047;
+//-----------------------------------------------------------------------
+void convercion_analogica(){ // Inicio de la funcion convertir ADC 
+				ADC3->CR2 |=0x40000000; // Activo SWSTART que es el pin para empezar a hacer la conversion ADC
+				while((ADC3->SR & 0x02)==1){} // Si la bandera que se ubica en el pin 1 esta en '1' la conversion acabo 
+} // Fin de la funcion de covertir ADC
+		
+		int tiempo;
+
+//------------------------------------------------Funcion DELAY-----------------------------------------------------------------------
+int delay(int aux){
+	tiempo = aux;
+	int j,ms=1000;
+	for(j=0;j<(tiempo*ms);j++){
+		
+	}
+}
+// ****************************** INTERRUPCIONES *****************
+		extern "C"{
+			void SysTick_Handler(void){
+				t++;
+				tmuestreo++;
+				if(t>1000){t=0;}
+					funcion=(sin(2*3.1416*f*t/1000)*amplitud)+2047;
+					if(habilitador==1){DAC->DHR12R1=funcion;}
+					
+				
+				if(tmuestreo%1000==0){
+				vector[jaux]=s1;
+				jaux++;
+				if(jaux>10){
+				 jaux=0;
+				 muestra_actual=s1;
+				 for(int i=0;i<10;i++){media=vector[i]+media;}
+				 media=media/10;
+				 if((muestra_actual)>media*1.15){habilitador=1;}else{habilitador=0;}
+					}
+				}
+				
+			}
+			void ADC_IRQHandler(void){
+								if(ADC3->SQR3 ==9){  // PIN 3
+								  A1=ADC3->DR; // Leo el valor del primer canal y lo guardo en una variable
+								}
+		
+							}
+		} 
+
+int main(void){
+		// ************************** PUERTOS ************************
+				RCC->AHB1ENR |=0XFF; // 
+		// ************************** PINES **************************
+				GPIOA->MODER |=0xF0A; // Alternante 0 y 1 / Analogico 4
+				GPIOA->AFR[0]=0x88; // Configuro los pines Rx y Tx 
+				GPIOC->MODER|=0X0; // todos de salida en los puertos C 
+		// ************************** SYSTICK ************************
+				SystemCoreClockUpdate();
+				SysTick_Config(SystemCoreClock/1000); // 1ms
+		// ***********************************************************
+		// ************************** DAC ****************************
+				RCC->APB1ENR |=0x20000000; // Activo el reloj del DAC
+				DAC->CR |=0x01; // Activo el DAC 1 (PA4)
+		// ***************************ADC********************************
+		GPIOF->MODER |=0xFFC0; // ANALOGICO pin 3, 4, 5, 6 y 7 O SEA (11)
+		// ******** ADC3 *********
+	RCC->APB2ENR |=0x400;      // Activo el reloj del AC3
+	ADC3->CR1 |=0x20;         //Activo la interrupcion EOCIE  & Se Configura La Resolucion Default 12 bits
+	ADC3->CR2 |=0x201;       // Activo EOCIE de seguido no por paquetes
+	ADC3->CR2 |=0x01;       // Habilito la conversion ADC3
+//ADC3->SQR3 |=(0X09);
+//******* IMPORTANTE ABAJO **********
+
+// ADC3->SQR3 |=(hexadecimal); Este comando me perdite configurar que pin voy a leer analogicamente 
+//activando el canal donde se encuentra el pin
+
+//**** EJEMPLO *******
+// ADC3->SQR3 |=(0X09); ..O.. ADC3->SQR3 |=(9);  // El canal 9 del ADC3 es el pin 3 del puerto F (PF3)
+
+	NVIC_EnableIRQ(ADC_IRQn); // Activo el vector de interrupciones para el ADC
+	//************
+		// ************************** BUCLE **************************
+				while(true){
+						//PRIMER SENSOR  1
+	ADC3->SQR3 =9;
+	convercion_analogica();
+	voltaje=(((3.3*(A1))/4095)*1000);
+	s1=voltaje;				
+	voltaje=0;
+	delay(100);
+				}
+		// ***********************************************************
+}
+// ***************************************************************

@@ -1,0 +1,154 @@
+/* Conexiones 
+	Puerto A:								
+		Pin 0: Tx							
+		Pin 1: Rx							 
+		Pin 4: DAC 1 
+
+*/
+
+// ****************************** LIBRERIAS **********************
+		#include <stdio.h>
+		#include "STM32f7xx.h"
+		#include "math.h"
+// *****************************ADC*********************************
+int A1,A2,A3,tmuestreo=0,jaux,habilitador=0;
+float voltaje,s1[2],s2[2],s3[2];
+int vector[10]={0,0,0,0,0,0,0,0,0,0};
+char alarma;
+void send();
+float muestra_actual=0,sumac,media;
+// ****************************** VARIABLES GLOBALES *************
+		int t=0;
+		float funcion=0;
+		int f=2000;
+		short amplitud=2047;
+//-----------------------------------------------------------------------
+void convercion_analogica(){ // Inicio de la funcion convertir ADC 
+				ADC3->CR2 |=0x40000000; // Activo SWSTART que es el pin para empezar a hacer la conversion ADC
+				while((ADC3->SR & 0x02)==1){} // Si la bandera que se ubica en el pin 1 esta en '1' la conversion acabo 
+} // Fin de la funcion de covertir ADC
+		
+		int tiempo;
+
+//------------------------------------------------Funcion DELAY-----------------------------------------------------------------------
+int delay(int aux){
+	tiempo = aux;
+	int j,ms=1000;
+	for(j=0;j<(tiempo*ms);j++){
+		
+	}
+}
+// ****************************** INTERRUPCIONES *****************
+		extern "C"{
+			void SysTick_Handler(void){
+				t++;
+				tmuestreo++;
+				if(t>1000){t=0;}
+					funcion=(sin(2*3.1416*f*t/1000)*amplitud)+2047;
+					if(habilitador==1){DAC->DHR12R1=funcion;}
+					
+				
+				if(tmuestreo%1000==0){
+				s1[jaux]=voltaje;
+				s2[jaux]=voltaje;
+				s3[jaux]=voltaje;
+				jaux++;
+				if(jaux>1){
+				 jaux=0;
+        			 if(s1[1]>s1[0]*1.2){alarma=1; send();}
+				 if(s2[1]>s2[0]*1.2){alarma=2;  send();}
+				 if(s3[1]>s3[0]*1.2){alarma=3; send();}
+					}
+				}
+				
+			}
+			void ADC_IRQHandler(void){
+								if(ADC3->SQR3 ==9){  // PIN 3
+								  A1=ADC3->DR; // Leo el valor del primer canal y lo guardo en una variable
+								}
+								if(ADC3->SQR3 ==14){ // PIN 4
+									A2=ADC3->DR; // Si estoy en el 2do canal le asigno el valor a otra variable
+								}
+								if(ADC3->SQR3 ==15){ // PIN 5
+									A3=ADC3->DR; // Si estoy en el 3cer canal le asigno el valor a otra variable
+								}
+		
+							}
+		} 
+		
+				void send(){
+    short i=0;
+		UART7->TDR = alarma;
+    while ((UART7->ISR &= 0x80)==0);  //esperar hasta que el TXE SEA 1, LO QUE INDICA EL ENVIO DE UN DATO
+}
+
+int main(void){
+		// ************************** PUERTOS ************************
+				RCC->AHB1ENR |=0XFF; // 
+		// ************************** PINES **************************
+				GPIOA->MODER |=0xF0A; // Alternante 0 y 1 / Analogico 4
+				GPIOA->AFR[0]=0x88; // Configuro los pines Rx y Tx 
+				GPIOC->MODER|=0X0; // todos de salida en los puertos C 
+		// ************************** SYSTICK ************************
+				SystemCoreClockUpdate();
+				SysTick_Config(SystemCoreClock/1000); // 1ms
+		// ***********************************************************
+		// ************************** DAC ****************************
+				RCC->APB1ENR |=0x20000000; // Activo el reloj del DAC
+				DAC->CR |=0x01; // Activo el DAC 1 (PA4)
+		// ***************************ADC********************************
+		GPIOF->MODER |=0xFFC0; // ANALOGICO pin 3, 4, 5, 6 y 7 O SEA (11)
+		// ******** ADC3 *********
+	RCC->APB2ENR |=0x400;      // Activo el reloj del AC3
+	ADC3->CR1 |=0x20;         //Activo la interrupcion EOCIE  & Se Configura La Resolucion Default 12 bits
+	ADC3->CR2 |=0x201;       // Activo EOCIE de seguido no por paquetes
+	ADC3->CR2 |=0x01;       // Habilito la conversion ADC3
+//ADC3->SQR3 |=(0X09);
+//******* IMPORTANTE ABAJO **********
+
+// ADC3->SQR3 |=(hexadecimal); Este comando me perdite configurar que pin voy a leer analogicamente 
+//activando el canal donde se encuentra el pin
+
+//**** EJEMPLO *******
+// ADC3->SQR3 |=(0X09); ..O.. ADC3->SQR3 |=(9);  // El canal 9 del ADC3 es el pin 3 del puerto F (PF3)
+ GPIOE->MODER |=0x28001; // Puerto C PIN 7 & PIN 8 ALTERNATIVO 
+	GPIOE->OTYPER |= 0;       
+	GPIOE->OSPEEDR |= 0x55555555;       //
+	GPIOE->PUPDR |=  0x10000000;       //
+	// ************ CONFIGURACION UART **********
+			RCC->APB1ENR |= 0x40000000; // Activo el reloj del UART7
+			UART7->BRR =0x8B; // Configuro para una velocidad de 115200 baudios 
+			UART7->CR1 |=0x04; // Activo Rx del registro 
+			UART7->CR1 |=0x08; // Activo Tx del registro 
+			UART7->CR1 |=0x20; // Activo la interrupcion por rebimiento de datos 
+			UART7->CR1 |=0x01; // Activo el UART7 
+			NVIC_EnableIRQ(UART7_IRQn); // Funcion para activar la interrupcion por recibir datos del UART7
+		// ******************************************
+	//UART BT 
+	GPIOE->AFR[0] |=0x80000000; // AFRH8 pin 
+	GPIOE->AFR[1] |=0x8; // AFRL8 pin
+
+
+	NVIC_EnableIRQ(ADC_IRQn); // Activo el vector de interrupciones para el ADC
+	//************
+		// ************************** BUCLE **************************
+				while(true){
+						//PRIMER SENSOR  1
+	ADC3->SQR3 =9;
+	convercion_analogica();
+	voltaje=(((3.3*(A1))/4095)*1000);
+					
+	voltaje=0;
+	//SEGUNDO SENSOR  2
+	ADC3->SQR3 =14;
+	convercion_analogica();
+	voltaje=(((3.3*(A2))/4095)*1000);
+	//TERCER SENSOR  3
+	ADC3->SQR3 =15;
+	convercion_analogica();
+	voltaje=(((3.3*(A3))/4095)*1000);
+	delay(100);
+				}
+		// ***********************************************************
+}
+// ***************************************************************
